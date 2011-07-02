@@ -34,7 +34,7 @@ public class WaveLogger extends Activity {
 
     // we use the package name, so clones on the WaveLogger (with different package names)
     // can simultaneously connect to the WaveService
-    private final String API_KEY = this.getPackageName();
+    private String API_KEY;
     
     private IWaveServicePublic mWaveService;
     private boolean mBound;
@@ -51,6 +51,9 @@ public class WaveLogger extends Activity {
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+        
+        // set the API KEY
+        API_KEY = this.getPackageName();
         
         // connect UI Outlets
         accelButton = (Button) findViewById(R.id.accel_button);
@@ -73,7 +76,6 @@ public class WaveLogger extends Activity {
             Toast.makeText(this, "Connected to WaveService", Toast.LENGTH_SHORT).show();
         } else {
             Log.d(TAG, "Could not bind with "+i);
-            // TODO: replace this Toast with a dialog that allows quitting
             Toast.makeText(this, "Could not connect to the WaveService!", Toast.LENGTH_SHORT).show();
             messageTextView.setText("ERROR:\n\nFailed to bind to the WaveService.\n\nIs AndroidWave installed on this device?\n\nPlease address this issue and restart this Application.");
         }
@@ -108,6 +110,7 @@ public class WaveLogger extends Activity {
     }
     
     protected void checkAuthorizations() {
+        // TODO: replace button text with autharized rate/precision info upon authorization
         try {
             boolean authorizedAtLeastOne = false;
             

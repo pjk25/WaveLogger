@@ -17,7 +17,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name="edu.berkeley.androidwave.waveservice.WaveLoggerService" />
+        <service android:name="edu.berkeley.androidwave.wavelogger.service.WaveLoggerService" />
     </application>
     
     <!-- at least API level 5 so we can use the newer Forground service API -->

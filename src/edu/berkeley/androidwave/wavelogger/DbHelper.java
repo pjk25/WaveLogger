@@ -90,6 +90,10 @@ public class DbHelper {
         throw new UnsupportedOperationException("not implemented yet");
     }
     
+    public void closeDatabase() {
+        database.close();
+    }
+    
     /**
      * SQLiteOpenHelper subclass
      */
@@ -109,7 +113,7 @@ public class DbHelper {
                     + AccelDataColumns.SAMPLE_TIME + " TEXT,"
                     + AccelDataColumns.X + " REAL,"
                     + AccelDataColumns.Y + " REAL,"
-                    + AccelDataColumns.Z + "REAL"
+                    + AccelDataColumns.Z + " REAL"
                     + ");");
             
             db.execSQL("CREATE TABLE " + LOC_DATA_TABLE_NAME + " ("

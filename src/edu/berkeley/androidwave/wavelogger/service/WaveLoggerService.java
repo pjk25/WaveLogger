@@ -40,7 +40,7 @@ public class WaveLoggerService extends Service {
     
     public static final String RECIPE_IDS_EXTRA = "recipe_ids";
     
-    private final String API_KEY = this.getPackageName();
+    private String API_KEY;
 
     private IWaveServicePublic mWaveService;
     private boolean mBound;
@@ -48,54 +48,39 @@ public class WaveLoggerService extends Service {
     protected DbHelper databaseHelper;
     
     private boolean mLogging;
+    
+    protected Intent startIntent;
 
     @Override
     public void onCreate() {
+        API_KEY = this.getPackageName();
+        
         mWaveService = null;
         mBound = false;
         mLogging = false;
         
         databaseHelper = new DbHelper(this);
         
-        // bind to WaveService
-        Intent i = new Intent(ACTION_WAVE_SERVICE);
-        if (bindService(i, mConnection, Context.BIND_AUTO_CREATE)) {
-            mBound = true;
-            // Toast.makeText(this, "Connected to WaveService", Toast.LENGTH_SHORT).show();
-        } else {
-            Log.d(getClass().getSimpleName(), "Could not bind with "+i);
-            Toast.makeText(this, "Could not connect to the WaveService!", Toast.LENGTH_SHORT).show();
-        }
+        // we cannot bind to the WaveService in onCreate, so we must wait
+        // until onStartCommand
     }
     
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        
         synchronized(this) {
             if (!mLogging) {
-                // extract the recipe ids from the intent extras, and begin listening
-                // and logging
-        
-                ArrayList<String> recipeIds = intent.getStringArrayListExtra(RECIPE_IDS_EXTRA);
-                for (String id : recipeIds) {
-                    IWaveRecipeOutputDataListener outputListener;
-                    if (id.equals(WaveLogger.ACCEL_RECIPE_ID)) {
-                        outputListener = accelOutputListener;
-                    } else {
-                        outputListener = locOutputListener;
-                    }
-                    
-                    try {
-                        if (!mWaveService.registerRecipeOutputListener(API_KEY, id, outputListener)) {
-                            Toast.makeText(this, "Error requesting data for recipe "+id, Toast.LENGTH_SHORT);
-                        }
-                    } catch (RemoteException e) {
-                        Log.d(TAG, "lost connection to the service");
-                    }
+                startIntent = intent;
+                // bind to WaveService
+                Intent i = new Intent(ACTION_WAVE_SERVICE);
+                if (bindService(i, mConnection, Context.BIND_AUTO_CREATE)) {
+                    mBound = true;
+                } else {
+                    Log.d(getClass().getSimpleName(), "Could not bind with "+i);
+                    Toast.makeText(this, "Could not connect to the WaveService!", Toast.LENGTH_SHORT).show();
                 }
-                mLogging = true;
             } else {
                 Toast.makeText(this, "WaveLoggerService is already logging.", Toast.LENGTH_SHORT);
+                stopSelf();
             }
         }
         
@@ -110,17 +95,24 @@ public class WaveLoggerService extends Service {
     
     @Override
     public void onDestroy() {
+        Log.d(TAG, "onDestroy");
+        
         // stop logging if we are logging
         synchronized(this) {
             if (mLogging) {
-                try {
-                    mWaveService.unregisterRecipeOutputListener(API_KEY, WaveLogger.ACCEL_RECIPE_ID);
-                    mWaveService.unregisterRecipeOutputListener(API_KEY, WaveLogger.LOC_RECIPE_ID);
-                } catch (RemoteException e) {
-                    Log.d(TAG, "lost connection to the service");
+                if (mWaveService != null) {
+                    Toast.makeText(this, "WaveLogger stopping logging", Toast.LENGTH_SHORT);
+                    try {
+                        mWaveService.unregisterRecipeOutputListener(API_KEY, WaveLogger.ACCEL_RECIPE_ID);
+                        mWaveService.unregisterRecipeOutputListener(API_KEY, WaveLogger.LOC_RECIPE_ID);
+                    } catch (RemoteException e) {
+                        Log.d(TAG, "lost connection to the service");
+                    }
                 }
             }
         }
+        
+        databaseHelper.closeDatabase();
         
         // disconnect from the WaveService
         if (mBound) {
@@ -128,17 +120,43 @@ public class WaveLoggerService extends Service {
             mBound = false;
         }
     }
+    
+    protected void afterWaveServiceBound() {
+        synchronized(this) {
+            // extract the recipe ids from the intent extras, and begin listening
+            // and logging
+            ArrayList<String> recipeIds = startIntent.getStringArrayListExtra(RECIPE_IDS_EXTRA);
+            Toast.makeText(this, "Logging data for the following recipes: "+recipeIds, Toast.LENGTH_SHORT);
+            for (String id : recipeIds) {
+                IWaveRecipeOutputDataListener outputListener;
+                if (id.equals(WaveLogger.ACCEL_RECIPE_ID)) {
+                    outputListener = accelOutputListener;
+                } else {
+                    outputListener = locOutputListener;
+                }
+            
+                try {
+                    if (!mWaveService.registerRecipeOutputListener(API_KEY, id, outputListener)) {
+                        Toast.makeText(this, "Error requesting data for recipe "+id, Toast.LENGTH_SHORT);
+                    }
+                } catch (RemoteException e) {
+                    Log.d(TAG, "lost connection to the service");
+                }
+            }
+            mLogging = true;
+        }
+    }
 
     // Nested ServiceConnection subclass
     private ServiceConnection mConnection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder service) {
+            Log.d(TAG, String.format("ServiceConnection.onServiceConnected(%s, %s)", className, service));
             mWaveService = IWaveServicePublic.Stub.asInterface(service);
-            // NOTE: We may have problems if binding is not complete before
-            //       onStartCommand is called.  We might have to make onCreate
-            //       block until binding is complete
+            afterWaveServiceBound();
         }
         
         public void onServiceDisconnected(ComponentName className) {
+            Log.d(TAG, String.format("ServiceConnection.onServiceDisconnected(%s)", className));
             mWaveService = null;
         }
     };
@@ -148,6 +166,7 @@ public class WaveLoggerService extends Service {
         public void receiveWaveRecipeOutputData(ParcelableWaveRecipeOutputData wrOutput) {
             // log the received data to the appropriate SQLite table
             databaseHelper.insertAccelData(new Date(), wrOutput.getTime(), wrOutput.valuesAsMap());
+            // Log.v(TAG, "wrOutput => " + wrOutput);
         }
     };
     
@@ -155,10 +174,11 @@ public class WaveLoggerService extends Service {
         public void receiveWaveRecipeOutputData(ParcelableWaveRecipeOutputData wrOutput) {
             // log the received data to the appropriate SQLite table
             databaseHelper.insertLocData(new Date(), wrOutput.getTime(), wrOutput.valuesAsMap());
+            // Log.v(TAG, "wrOutput => " + wrOutput);
         }
     };
     
-    public boolean isBound() {
+    public synchronized boolean isBound() {
         return (mBound && (mWaveService != null));
     }
 }
