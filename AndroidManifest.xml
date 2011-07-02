@@ -3,13 +3,23 @@
       package="edu.berkeley.androidwave.wavelogger"
       android:versionCode="1"
       android:versionName="1.0">
+
+    <uses-permission android:name="edu.berkeley.androidwave.permission.WAVE_SERVICE" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />	 
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />	
+
     <application android:label="@string/app_name">
-        <activity android:name="WaveLogger"
+        <activity android:name="edu.berkeley.androidwave.wavelogger.WaveLogger"
                   android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <service android:name="edu.berkeley.androidwave.waveservice.WaveLoggerService" />
     </application>
+    
+    <!-- at least API level 5 so we can use the newer Forground service API -->
+    <uses-sdk android:minSdkVersion="7" />
 </manifest> 

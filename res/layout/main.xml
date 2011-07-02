@@ -7,7 +7,45 @@
 <TextView  
     android:layout_width="fill_parent" 
     android:layout_height="wrap_content" 
-    android:text="Hello World, WaveLogger"
+    android:textSize="14sp"
+    android:text="This is the AndroidWave testing logger. It includes a background service component, to allow background logging of data."
+    />
+<Button
+    android:id="@+id/accel_button"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginLeft="16px"
+    android:layout_marginRight="16px"
+    android:text="Request Authorization for Accelerometer Pass Through"
+    />
+<Button
+    android:id="@+id/loc_button"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginLeft="16px"
+    android:layout_marginRight="16px"
+    android:text="Request Authorization for Location Pass Through"
+    />
+<Button
+    android:id="@+id/start_button"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginLeft="16px"
+    android:layout_marginRight="16px"
+    android:text="Start logging"
+    />
+<Button
+    android:id="@+id/stop_button"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginLeft="16px"
+    android:layout_marginRight="16px"
+    android:text="Stop logging"
+    />
+<TextView
+    android:id="@+id/message_textview"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
     />
 </LinearLayout>
 
