@@ -110,11 +110,12 @@ public class WaveLogger extends Activity {
     }
     
     protected void checkAuthorizations() {
-        // TODO: replace button text with autharized rate/precision info upon authorization
         try {
             boolean authorizedAtLeastOne = false;
             
             if (mWaveService.isAuthorized(API_KEY, ACCEL_RECIPE_ID)) {
+                WaveRecipeAuthorizationInfo authInfo = mWaveService.retrieveAuthorizationInfo(API_KEY, ACCEL_RECIPE_ID);
+                accelButton.setText(String.format("Accelerometer authorized at %5f Hz, %5f precision", authInfo.outputMaxRate, authInfo.outputMaxPrecision));
                 accelButton.setEnabled(false);
             } else {
                 accelButton.setOnClickListener(accelButtonListener);
@@ -123,6 +124,8 @@ public class WaveLogger extends Activity {
             }
             
             if (mWaveService.isAuthorized(API_KEY, LOC_RECIPE_ID)) {
+                WaveRecipeAuthorizationInfo authInfo = mWaveService.retrieveAuthorizationInfo(API_KEY, LOC_RECIPE_ID);
+                accelButton.setText(String.format("Location authorized at %5f Hz, %5f precision", authInfo.outputMaxRate, authInfo.outputMaxPrecision));
                 locButton.setEnabled(false);
             } else {
                 locButton.setOnClickListener(locButtonListener);
