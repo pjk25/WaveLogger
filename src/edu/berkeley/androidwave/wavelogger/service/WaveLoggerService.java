@@ -11,6 +11,9 @@ package edu.berkeley.androidwave.wavelogger.service;
 import edu.berkeley.androidwave.waveclient.*;
 import edu.berkeley.androidwave.wavelogger.*;
 
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
@@ -40,6 +43,8 @@ public class WaveLoggerService extends Service {
     
     public static final String RECIPE_IDS_EXTRA = "recipe_ids";
     
+    private static final int NOTIFICATION_ID = 1;
+    
     private String API_KEY;
 
     private IWaveServicePublic mWaveService;
@@ -63,6 +68,27 @@ public class WaveLoggerService extends Service {
         
         // we cannot bind to the WaveService in onCreate, so we must wait
         // until onStartCommand
+
+        // move this service into the foreground
+        NotificationManager notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+        int icon = R.drawable.cal;
+        CharSequence tickerText = "WaveLogger logging started";
+        long when = System.currentTimeMillis();
+        Notification notification = new Notification(icon, tickerText, when);
+        
+        CharSequence contentTitle = "WaveLogger";
+        CharSequence contentText = "logging started";
+        Intent associatedIntent = new Intent(this, WaveLogger.class);
+        PendingIntent i = PendingIntent.getActivity(this,
+                                                    0, // requestCode
+                                                    associatedIntent,
+                                                    PendingIntent.FLAG_UPDATE_CURRENT);
+        notification.setLatestEventInfo(this,
+                                        contentTitle,
+                                        contentText,
+                                        i);
+        
+        this.startForeground(NOTIFICATION_ID, notification);
     }
     
     @Override
