@@ -4,20 +4,26 @@ import edu.berkeley.androidwave.waveclient.*;
 import edu.berkeley.androidwave.wavelogger.service.WaveLoggerService;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+import java.io.File;
 import java.util.ArrayList;
 
 public class WaveLogger extends Activity {
@@ -39,6 +45,8 @@ public class WaveLogger extends Activity {
     private IWaveServicePublic mWaveService;
     private boolean mBound;
     
+    protected DbHelper databaseHelper;
+
     protected Button accelButton;
     protected Button locButton;
     protected Button startButton;
@@ -68,6 +76,9 @@ public class WaveLogger extends Activity {
         stopButton.setEnabled(true);
         
         stopButton.setOnClickListener(stopButtonListener);
+        
+        // open the database
+        databaseHelper = new DbHelper(this);
         
         // connect to the service
         Intent i = new Intent(ACTION_WAVE_SERVICE);
@@ -223,6 +234,68 @@ public class WaveLogger extends Activity {
             stopService(waveLoggerServiceIntent);
         }
     };
+    
+    /**
+     * Create the menu, which allows the user to export and empty the app's
+     * data storage database
+     */
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.options_menu, menu);
+        return true;
+    }
+    
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch  (item.getItemId()) {
+            case R.id.export_database:
+                return exportDatabase();
+            case R.id.empty_database:
+                return emptyDatabase();
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+    
+    protected boolean exportDatabase() {
+        File f = databaseHelper.writeContentsToSdCard();
+        
+        String message;
+        if (f != null) {
+            message = "Data has been exported to "+f.getName();
+        } else {
+            message = "Errors were encountered during export";
+        }
+        AlertDialog.Builder builder = new AlertDialog.Builder(WaveLogger.this);
+        builder.setMessage(message)
+               .setCancelable(true)
+               .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                   public void onClick(DialogInterface dialog, int id) {
+                       // nothing
+                   }
+               });
+        AlertDialog alert = builder.show();
+        return (f != null);
+    }
+    
+    protected boolean emptyDatabase() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(WaveLogger.this);
+        builder.setMessage("Are you sure you want to delete all previously logged data?")
+               .setCancelable(false)
+               .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                   public void onClick(DialogInterface dialog, int id) {
+                       databaseHelper.emptyDatabase();
+                   }
+               })
+               .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                   public void onClick(DialogInterface dialog, int id) {
+                       Log.d(TAG, "emptyDatabase() cancelled.");
+                   }
+               });
+        AlertDialog alert = builder.show();
+        return true;
+    }
     
     /**
      * ServiceConnection subclass

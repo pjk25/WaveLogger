@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">WaveLogger</string>
+    <string name="export_database">Export to file...</string>
+    <string name="empty_database">Clear logged data</string>
 </resources>
