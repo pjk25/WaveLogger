@@ -123,6 +123,7 @@ public class DbHelper {
                         c.moveToNext();
                     }
                 }
+                c.close();
             }
             finally {
                 out.close();
