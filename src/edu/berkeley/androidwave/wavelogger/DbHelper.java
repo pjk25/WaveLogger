@@ -58,10 +58,9 @@ public class DbHelper {
         public static final String SAMPLE_TIME = "sample_time";
         public static final String LATITUDE = "latitude";
         public static final String LONGITUDE = "longitude";
-        public static final String ACCURACY = "accuracy";
         public static final String ALTITUDE = "altitude";
-        public static final String BEARING = "bearing";
-        public static final String SPEED = "speed";
+        
+        public static final String[] ALL = {RCVD_TIMESTAMP, SAMPLE_TIME, LATITUDE, LONGITUDE, ALTITUDE};
     }
     
     private DatabaseHelper mOpenHelper;
@@ -136,7 +135,38 @@ public class DbHelper {
     }
     
     protected boolean writeLocData(File f) {
-        return false;
+        try {
+            Writer out = new OutputStreamWriter(new FileOutputStream(f), CSV_ENC);
+            try {
+                // header
+                out.write("rcvd_time, sample_time, longitude, latitude, altitude\n");
+                
+                Cursor c = database.query(LOC_DATA_TABLE_NAME,
+                                          LocDataColumns.ALL,
+                                          null, null, null, null, null);
+                
+                if (c.moveToFirst()) {
+                    for (int i=0; i<c.getCount(); i++) {
+                        String line = String.format("%s,%d,%f,%f,%f\n",
+                                                    c.getString(0),
+                                                    c.getLong(1),
+                                                    c.getDouble(2),
+                                                    c.getDouble(3),
+                                                    c.getDouble(4));
+                        out.write(line);
+                        c.moveToNext();
+                    }
+                }
+                c.close();
+            }
+            finally {
+                out.close();
+            }
+        } catch (IOException ioe) {
+            Log.w(TAG, ioe);
+            return false;
+        }
+        return true;
     }
     
     public File writeContentsToSdCard() {
@@ -220,10 +250,7 @@ public class DbHelper {
                     + LocDataColumns.SAMPLE_TIME + " TEXT,"
                     + LocDataColumns.LATITUDE + " REAL,"
                     + LocDataColumns.LONGITUDE + " REAL,"
-                    + LocDataColumns.ACCURACY + " REAL,"
-                    + LocDataColumns.ALTITUDE + " REAL,"
-                    + LocDataColumns.BEARING + " REAL,"
-                    + LocDataColumns.SPEED + " REAL"
+                    + LocDataColumns.ALTITUDE + " REAL"
                     + ");");
         }
         
