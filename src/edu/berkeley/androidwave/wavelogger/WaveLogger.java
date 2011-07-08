@@ -96,6 +96,8 @@ public class WaveLogger extends Activity {
     protected void onStop() {
         super.onStop();
         
+        databaseHelper.closeDatabase();
+        
         if (mBound) {
             unbindService(mConnection);
             mBound = false;
