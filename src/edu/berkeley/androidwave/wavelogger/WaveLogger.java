@@ -130,20 +130,20 @@ public class WaveLogger extends Activity {
                 WaveRecipeAuthorizationInfo authInfo = mWaveService.retrieveAuthorizationInfo(API_KEY, ACCEL_RECIPE_ID);
                 accelButton.setText(String.format("Accelerometer authorized at %5f Hz, %5f precision", authInfo.outputMaxRate, authInfo.outputMaxPrecision));
                 accelButton.setEnabled(false);
+                authorizedAtLeastOne = true;
             } else {
                 accelButton.setOnClickListener(accelButtonListener);
                 accelButton.setEnabled(true);
-                authorizedAtLeastOne = true;
             }
             
             if (mWaveService.isAuthorized(API_KEY, LOC_RECIPE_ID)) {
                 WaveRecipeAuthorizationInfo authInfo = mWaveService.retrieveAuthorizationInfo(API_KEY, LOC_RECIPE_ID);
                 accelButton.setText(String.format("Location authorized at %5f Hz, %5f precision", authInfo.outputMaxRate, authInfo.outputMaxPrecision));
                 locButton.setEnabled(false);
+                authorizedAtLeastOne = true;
             } else {
                 locButton.setOnClickListener(locButtonListener);
                 locButton.setEnabled(true);
-                authorizedAtLeastOne = true;
             }
             
             if (authorizedAtLeastOne) {
