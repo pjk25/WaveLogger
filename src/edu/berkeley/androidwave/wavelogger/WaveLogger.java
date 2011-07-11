@@ -287,7 +287,8 @@ public class WaveLogger extends Activity {
                .setCancelable(false)
                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                    public void onClick(DialogInterface dialog, int id) {
-                       databaseHelper.emptyDatabase();
+                       long c = databaseHelper.emptyDatabase();
+                       Toast.makeText(WaveLogger.this, ""+c+" entries were removed.", Toast.LENGTH_SHORT).show();
                    }
                })
                .setNegativeButton("No", new DialogInterface.OnClickListener() {
