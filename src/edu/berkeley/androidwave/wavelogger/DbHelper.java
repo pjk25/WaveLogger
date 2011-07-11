@@ -95,7 +95,24 @@ public class DbHelper {
     }
     
     public boolean insertLocData(Date rcvdTime, long time, Map<String, Double> values) {
-        throw new UnsupportedOperationException("not implemented yet");
+        
+        ContentValues cv = new ContentValues(values.size() + 2);
+        cv.put(LocDataColumns.RCVD_TIMESTAMP, (new Timestamp(rcvdTime.getTime())).toString());
+        cv.put(LocDataColumns.SAMPLE_TIME, time);
+        cv.put(LocDataColumns.LATITUDE, values.get("latitude"));
+        cv.put(LocDataColumns.LONGITUDE, values.get("longitude"));
+        cv.put(LocDataColumns.ALTITUDE, values.get("altitude"));
+        
+        long result;
+        
+        try {
+            result = database.insertOrThrow(LOC_DATA_TABLE_NAME, null, cv);
+        } catch (SQLException e) {
+            Log.w(TAG, "SQLException while storing "+cv, e);
+            return false;
+        }
+        
+        return result >= 0;
     }
     
     protected boolean writeAccelData(File f) {
@@ -175,6 +192,7 @@ public class DbHelper {
         
         Date now = new Date();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd 'at' HH-mm-ss", Locale.US);
+        // TODO: change the folder name to one derived from the package name
         String bundleName = "WaveLogger Database Export "+sdf.format(now);
         
         // check access to the sd card
