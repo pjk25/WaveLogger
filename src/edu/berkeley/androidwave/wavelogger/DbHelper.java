@@ -37,6 +37,8 @@ public class DbHelper {
     protected static final String ACCEL_DATA_TABLE_NAME = "accel_data";
     protected static final String LOC_DATA_TABLE_NAME = "location_data";
     
+    private Context mContext;
+    
     protected SQLiteDatabase database;
     
     static final class AccelDataColumns {
@@ -66,6 +68,7 @@ public class DbHelper {
     private DatabaseHelper mOpenHelper;
     
     public DbHelper(Context c) {
+        mContext = c;
         mOpenHelper = new DatabaseHelper(c);
         database = mOpenHelper.getWritableDatabase();
     }
@@ -192,8 +195,7 @@ public class DbHelper {
         
         Date now = new Date();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd 'at' HH-mm-ss", Locale.US);
-        // TODO: change the folder name to one derived from the package name
-        String bundleName = "WaveLogger Database Export "+sdf.format(now);
+        String bundleName = mContext.getPackageName()+" Database Export "+sdf.format(now);
         
         // check access to the sd card
         if (!Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
