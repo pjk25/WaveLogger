@@ -128,6 +128,7 @@ public class WaveLoggerService extends Service {
             if (mLogging) {
                 if (mWaveService != null) {
                     Toast.makeText(this, "WaveLogger stopping logging", Toast.LENGTH_SHORT);
+                    Log.d(TAG, "WaveLogger stopping logging");
                     try {
                         mWaveService.unregisterRecipeOutputListener(API_KEY, WaveLogger.ACCEL_RECIPE_ID);
                         mWaveService.unregisterRecipeOutputListener(API_KEY, WaveLogger.LOC_RECIPE_ID);
@@ -153,6 +154,7 @@ public class WaveLoggerService extends Service {
             // and logging
             ArrayList<String> recipeIds = startIntent.getStringArrayListExtra(RECIPE_IDS_EXTRA);
             Toast.makeText(this, "Logging data for the following recipes: "+recipeIds, Toast.LENGTH_SHORT);
+            Log.d(TAG, "Logging data for the following recipes: "+recipeIds);
             for (String id : recipeIds) {
                 IWaveRecipeOutputDataListener outputListener;
                 if (id.equals(WaveLogger.ACCEL_RECIPE_ID)) {
@@ -164,6 +166,7 @@ public class WaveLoggerService extends Service {
                 try {
                     if (!mWaveService.registerRecipeOutputListener(API_KEY, id, outputListener)) {
                         Toast.makeText(this, "Error requesting data for recipe "+id, Toast.LENGTH_SHORT);
+                        Log.d(TAG, "Error requesting data for recipe "+id);
                     }
                 } catch (RemoteException e) {
                     Log.d(TAG, "lost connection to the service");
