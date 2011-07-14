@@ -209,6 +209,7 @@ public class DbHelper {
             File accelDataFile = new File(parent, "accelerometer.csv");
             File locDataFile = new File(parent, "location.csv");
             
+            // TODO: only write CSV files if there is data
             boolean didFail = false;
             if (!writeAccelData(accelDataFile)) {
                 didFail = true;
