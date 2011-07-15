@@ -35,4 +35,4 @@ sqlite database.
 
 In order to compile two copies of WaveLogger for simultaneous logging, one
 need only adjust the package name in AndroidManifest.xml, and if desired, the
-app_name string in res/values/strings.xml.  
+app_name string in res/values/strings.xml.

@@ -59,6 +59,8 @@ public class WaveLogger extends Activity {
     protected Button stopButton;
     protected TextView messageTextView;
     
+    // TODO: present a dialog when the connection to the service is lost
+    
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -277,11 +279,11 @@ public class WaveLogger extends Activity {
                 try {
                     if (mWaveService.isAuthorized(API_KEY, ACCEL_RECIPE_ID)) {
                         WaveRecipeAuthorizationInfo authInfo = mWaveService.retrieveAuthorizationInfo(API_KEY, ACCEL_RECIPE_ID);
-                        out.write(String.format("Accelerometer %f Hz, %f units", authInfo.outputMaxRate, authInfo.outputMaxPrecision));
+                        out.write(String.format("Accelerometer %f Hz, %f units\n", authInfo.outputMaxRate, authInfo.outputMaxPrecision));
                     }
                     if (mWaveService.isAuthorized(API_KEY, LOC_RECIPE_ID)) {
                         WaveRecipeAuthorizationInfo authInfo = mWaveService.retrieveAuthorizationInfo(API_KEY, LOC_RECIPE_ID);
-                        out.write(String.format("Location %f Hz, %f units", authInfo.outputMaxRate, authInfo.outputMaxPrecision));
+                        out.write(String.format("Location %f Hz, %f units\n", authInfo.outputMaxRate, authInfo.outputMaxPrecision));
                     }
                 } catch (RemoteException e) {
                     Log.d(TAG, "lost connection to the service");
