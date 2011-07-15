@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<!-- http://www.html5rocks.com/en/tutorials/file/dndfiles/ -->
+<!-- Note: On the Chrome browser, the File API is not fully supported when
+           this file is opened as a file (via file://localhost...). It must
+           be served by a webserver in order to function properly 
+           http://blog.chromium.org/2008/12/security-in-depth-local-web-pages.html
+           http://code.google.com/p/chromium/issues/detail?id=47416 -->
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <style type="text/css">
+      html { height: 100% }
+      body { height: 100%; margin: 0px; padding: 0px }
+      #map_canvas { height: 100% }
+      
+      .example {
+        padding: 10px;
+        border 1px solid #ccc;
+      }
+    </style>
+    <script type="text/javascript"
+        src="http://maps.google.com/maps/api/js?sensor=true">
+    </script>
+    <script type="text/javascript">
+      function handleFileSelect(evt) {
+        var files = evt.target.files; // FileList object
+
+        // files is a FileList of File objects. List some properties.
+        var output = [];
+        for (var i = 0, f; f = files[i]; i++) {
+          if (!f.type.match('csv.*')) {
+            alert('Only CSV files will be parsed.  Please choose another file');
+            continue;
+          }
+          
+          output.push('<li><strong>', f.name, '</strong> (', f.type || 'n/a', ') - ',
+                      f.size, ' bytes, last modified: ',
+                      f.lastModifiedDate.toLocaleDateString(), '</li>');
+          
+          // now parse the csv and draw the map
+          var reader = new FileReader();
+          
+          // Closure to capture the file information.
+          reader.onload = (function(theFile) {
+            return function(e) {
+              e.target.result // <- the text
+              
+              var samples = [];
+              lines = e.target.result.split('\n');
+              for (var i=0; i < lines.length; i++) {
+                parts = lines[i].split(',');
+                
+                if (parts.length == 5 && parts[0] != 'rcvd_time') {
+                  values = []
+                  values.push(parts[0]);
+                  values.push(parseInt(parts[1]));
+                  for (var j=2; j < parts.length; j++) {
+                    values.push(parseFloat(parts[j]));
+                  };
+                  samples.push(values);
+                }
+              };
+              
+              // find the center by taking the mean of the lat and longitude
+              // (note that this will not work opposite of 0, 0 on the earth)
+              averageLat = 0;
+              averageLon = 0;
+              averageAlt = 0;
+              for (var i = samples.length - 1; i >= 0; i--){
+                values = samples[i];
+                averageLat += values[2];
+                averageLon += values[3];
+                averageAlt += values[4];
+              };
+              averageLat = averageLat / samples.length;
+              averageLon = averageLon / samples.length;
+              averageAlt = averageAlt / samples.length;
+              
+              var dataRate = samples.length * 1000.0 / (samples[samples.length-1][1] - samples[0][1]);
+              if (dataRate < 1.0) {
+                console.log("Average sample delay: "+(1/dataRate)+" seconds.");
+              } else {
+                console.log("Average data rate: "+dataRate+" Hz.");
+              };
+              
+              var centerLatLng = new google.maps.LatLng(averageLat, averageLon);
+              var myOptions = {
+                zoom: 15,
+                center: centerLatLng,
+                mapTypeId: google.maps.MapTypeId.HYBRID
+              };
+              var map = new google.maps.Map(document.getElementById("map_canvas"),
+                      myOptions);
+              
+              // now build the path as a polyline
+              var pathCoordinates = [];
+              for (var i=0; i < samples.length; i++) {
+                values = samples[i];
+                pathCoordinates.push(new google.maps.LatLng(values[2], values[3]));
+              };
+              
+              var path = new google.maps.Polyline({
+                path: pathCoordinates,
+                strokeColor: "#FF0000",
+                strokeOpacity: 0.8,
+                strokeWeight: 2
+              });
+              
+              path.setMap(map);
+              
+              for (var i=0; i < pathCoordinates.length; i++) {
+                var options = {
+                  strokeColor: "#FF0000",
+                  strokeOpacity: 0.6,
+                  strokeWeight: 1,
+                  fillColor: "#FF0000",
+                  fillOpacity: 0.5,
+                  map: map,
+                  center: pathCoordinates[i],
+                  radius: 4
+                };
+                circle = new google.maps.Circle(options);
+              };
+            };
+          })(f);
+          
+          reader.readAsText(f);
+        }
+        document.getElementById('list').innerHTML = '<ul>' + output.join('') + '</ul>';
+      }
+
+      function initialize() {
+        document.getElementById('files').addEventListener('change', handleFileSelect, false);
+      }
+
+    </script>
+    </head>
+    <body onload="initialize()">
+      
+      <div class="example">
+        <input type="file" id="files" name="files[]" />
+        <output id="list"></output>
+      </div>
+      <div id="notes">
+      </div>
+      
+      <div id="map_canvas" style="width:100%; height:100%"></div>
+    </body>
+  </head>
+</html>
