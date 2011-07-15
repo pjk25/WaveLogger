@@ -24,11 +24,17 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 
 public class WaveLogger extends Activity {
     
     private static final String TAG = WaveLogger.class.getSimpleName();
+
+    private static final String CSV_ENC = "UTF-8";
 
     private static final String ACTION_WAVE_SERVICE = "edu.berkeley.androidwave.intent.action.WAVE_SERVICE";
     private static final String ACTION_DID_AUTHORIZE = "edu.berkeley.androidwave.intent.action.DID_AUTHORIZE";
@@ -262,6 +268,30 @@ public class WaveLogger extends Activity {
     
     protected boolean exportDatabase() {
         File f = databaseHelper.writeContentsToSdCard();
+        
+        // add granularity data to f, which should be a directory
+        if (f != null && f.isDirectory()) {
+            File authFile = new File(f, "granularity.txt");
+            try {
+                Writer out = new OutputStreamWriter(new FileOutputStream(authFile), CSV_ENC);
+                try {
+                    if (mWaveService.isAuthorized(API_KEY, ACCEL_RECIPE_ID)) {
+                        WaveRecipeAuthorizationInfo authInfo = mWaveService.retrieveAuthorizationInfo(API_KEY, ACCEL_RECIPE_ID);
+                        out.write(String.format("Accelerometer %f Hz, %f units", authInfo.outputMaxRate, authInfo.outputMaxPrecision));
+                    }
+                    if (mWaveService.isAuthorized(API_KEY, LOC_RECIPE_ID)) {
+                        WaveRecipeAuthorizationInfo authInfo = mWaveService.retrieveAuthorizationInfo(API_KEY, LOC_RECIPE_ID);
+                        out.write(String.format("Location %f Hz, %f units", authInfo.outputMaxRate, authInfo.outputMaxPrecision));
+                    }
+                } catch (RemoteException e) {
+                    Log.d(TAG, "lost connection to the service");
+                } finally {
+                    out.close();
+                }
+            } catch (IOException ioe) {
+                Log.w(TAG, ioe);
+            }
+        }
         
         String message;
         if (f != null) {
